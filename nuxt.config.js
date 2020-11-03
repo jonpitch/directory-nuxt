@@ -1,3 +1,32 @@
+import path from 'path';
+import fs from 'fs';
+import companies from './data/companies.json';
+
+// const dynamicRoutes = () => {
+//   return new Promise((resolve) => {
+//     resolve(companies.map((c) => `company/${c.slug}`));
+//   });
+// };
+
+const dynamicRoutesWithPayload = () => {
+  const companyRoutes = companies.map((c) => {
+    return {
+      route: `/company/${c.slug}`,
+      payload: c,
+    };
+  });
+
+  const allRoutes = [];
+  allRoutes.concat({
+    route: '/',
+    payload: companies,
+  });
+
+  allRoutes.concat(companyRoutes);
+
+  return allRoutes;
+};
+
 export default {
   // Target (https://go.nuxtjs.dev/config-target)
   target: 'static',
@@ -31,8 +60,35 @@ export default {
   ],
 
   // Modules (https://go.nuxtjs.dev/config-modules)
-  modules: [],
+  modules: ['@nuxtjs/sitemap'],
 
   // Build Configuration (https://go.nuxtjs.dev/config-build)
-  build: {},
-}
+  build: {
+    // extend(_, context) {
+    //   if (context.isServer) {
+    //     companies.forEach((c) => {
+    //       this.buildContext.options.generate.routes.push(`/company/${c.slug}`);
+    //     });
+    //   }
+    // },
+  },
+
+  // Sitemap configuration https://github.com/nuxt-community/sitemap-module
+  sitemap: {
+    hostname: 'https://bcorporation.com',
+    gzip: true,
+    routes: JSON.parse(
+      fs.readFileSync(path.resolve(__dirname, 'data/companies.json'))
+    ).map((c) => {
+      return `/company/${c.slug}`;
+    }),
+  },
+
+  // router: {
+  //   middleware: 'companies',
+  // },
+
+  generate: {
+    routes: dynamicRoutesWithPayload,
+  },
+};

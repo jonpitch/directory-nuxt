@@ -1,65 +1,92 @@
 <template>
-  <div class="container">
-    <div>
-      <Logo />
-      <h1 class="title">directory-nuxt</h1>
-      <div class="links">
-        <a
-          href="https://nuxtjs.org/"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="button--green"
-        >
-          Documentation
-        </a>
-        <a
-          href="https://github.com/nuxt/nuxt.js"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="button--grey"
-        >
-          GitHub
-        </a>
-      </div>
-    </div>
+  <div>
+    <input
+      v-model="query"
+      type="search"
+      autocomplete="off"
+      placeholder="Search B Corporations"
+    />
+    <p>from JSON</p>
+    <ul>
+      <li v-for="b in companies" :key="b.id">
+        <nuxt-link :to="`/company/${b.slug}`">
+          {{ b.name }}
+        </nuxt-link>
+      </li>
+    </ul>
+    <!-- <p>from store</p>
+    <ul>
+      <li v-for="b in $store.state.companies" :key="b.id">
+        <nuxt-link :to="`/company/${b.slug}`">
+          {{ b.name }}
+        </nuxt-link>
+      </li>
+    </ul> -->
+    <!-- <p>from store</p>
+    <ul>
+      <li v-for="b in $store.state.companies" :key="b.id">
+        <nuxt-link :to="`/company/${b.slug}`">
+          {{ b.name }}
+        </nuxt-link>
+      </li>
+    </ul> -->
+    <!-- <ul>
+      <li v-for="b in companies" :key="b.slug">
+        {{ b.name }}
+      </li>
+    </ul> -->
   </div>
 </template>
 
-<script lang="ts">
-import Vue from 'vue'
+<script>
+import lunr from 'lunr';
+import companies from '~/data/companies.json';
+import search from '~/data/search.json';
 
-export default Vue.extend({})
+export default {
+  data() {
+    return {
+      query: '',
+      companies,
+    };
+  },
+  watch: {
+    async query(q) {
+      if (!q) {
+        this.companies = companies;
+        return;
+      }
+
+      const idx = await lunr.Index.load(search);
+      const results = idx.search(q);
+      const found = results.map((r) => {
+        return companies.filter((c) => c.id === r.ref)[0];
+      });
+
+      this.companies = found;
+    },
+  },
+};
 </script>
 
-<style>
-.container {
-  margin: 0 auto;
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-}
-
-.title {
-  font-family: 'Quicksand', 'Source Sans Pro', -apple-system, BlinkMacSystemFont,
-    'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  display: block;
-  font-weight: 300;
-  font-size: 100px;
-  color: #35495e;
-  letter-spacing: 1px;
-}
-
-.subtitle {
-  font-weight: 300;
-  font-size: 42px;
-  color: #526488;
-  word-spacing: 5px;
-  padding-bottom: 15px;
-}
-
-.links {
-  padding-top: 15px;
-}
-</style>
+<!--
+<script>
+import { mapState } from 'vuex';
+export default {
+  computed: {
+    ...mapState(['companies']),
+  },
+};
+</script>
+-->
+<!--
+<script>
+export default {
+  async asyncData({ params, error, payload }) {
+    if (payload) {
+      return { companies: payload };
+    }
+  },
+};
+</script>
+-->
